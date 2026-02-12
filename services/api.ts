@@ -20,13 +20,33 @@ const generateStatus = (): MachineStatus => {
   return MachineStatus.Running;
 };
 
+// Helper to generate Work Orders in 3 specific formats
+const generateWorkOrder = (): string => {
+  const type = Math.floor(Math.random() * 3);
+  const randomDigits = (n: number) => Array.from({length: n}, () => Math.floor(Math.random() * 10)).join('');
+  
+  switch (type) {
+    case 0:
+      // Format 1: JB11511876 (JB + 8 digits)
+      return `JB${randomDigits(8)}`;
+    case 1:
+      // Format 2: AB260701 (AB + 6 digits)
+      return `AB${randomDigits(6)}`;
+    case 2:
+      // Format 3: GP2026/0203 (GP + 4 digits + / + 4 digits)
+      return `GP${randomDigits(4)}/${randomDigits(4)}`;
+    default:
+      return `JB${randomDigits(8)}`;
+  }
+};
+
 const generateStandardMachines = (count: number, prefix: string): StandardMachine[] => {
   return Array.from({ length: count }).map((_, i) => ({
     id: `${prefix}-${(i + 1).toString().padStart(3, '0')}`,
     name: `${prefix} #${i + 1}`,
     status: generateStatus(),
-    errorMessage: Math.random() > 0.95 ? 'Sensor Timeout' : undefined,
-    workOrder: `WO-${20230000 + i}`,
+    errorMessage: Math.random() > 0.95 ? '感測器超時' : undefined,
+    workOrder: generateWorkOrder(),
     totalProduction: Math.floor(Math.random() * 50000) + 1000,
     currentMoldProduction: Math.floor(Math.random() * 5000)
   }));
@@ -37,7 +57,7 @@ const generateSortingMachines = (count: number): SortingMachine[] => {
     id: `SORT-${(i + 1).toString().padStart(2, '0')}`,
     name: `Sorting #${i + 1}`,
     status: generateStatus(),
-    workOrder: `WO-${20240000 + i}`,
+    workOrder: generateWorkOrder(),
     totalProduction: Math.floor(Math.random() * 20000),
     yieldRate: 95 + Math.random() * 4.9,
     measurements: Array.from({ length: 10 }).map((_, j) => ({
@@ -67,7 +87,7 @@ const generatePackagingMachines = (count: number): PackagingMachine[] => {
     id: `PKG-${i + 1}`,
     name: `Packer #${i + 1}`,
     status: MachineStatus.Running,
-    workOrder: `PKG-WO-${i}`,
+    workOrder: generateWorkOrder(),
     totalProduction: Math.floor(Math.random() * 500),
     speed: 45 + Math.floor(Math.random() * 10)
   }));
@@ -85,7 +105,7 @@ const generateEnergyBlocks = (count: number): EnergyBlock[] => {
   }));
 };
 
-const getMockData = (): DashboardData => ({
+export const getMockData = (): DashboardData => ({
   overview: {
     totalOEE: 87.5,
     activeMachines: 245,
@@ -107,7 +127,7 @@ const getMockData = (): DashboardData => ({
   energy: generateEnergyBlocks(20) // Sheet 9
 });
 
-// --- API FETCH FUNCTION ---
+// --- API FUNCTIONS ---
 
 export const fetchFactoryData = async (baseUrl: string = DEFAULT_GOOGLE_SCRIPT_URL): Promise<DashboardData> => {
   // If no URL is provided/configured, strictly use mock
@@ -119,17 +139,7 @@ export const fetchFactoryData = async (baseUrl: string = DEFAULT_GOOGLE_SCRIPT_U
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout for real data
 
-    // Strategy: Fetch all sheets in parallel based on the user requirement
-    // Sheet 1: Overview
-    // Sheet 2: Heading
-    // Sheet 3: Threading
-    // Sheet 4: Pointing
-    // Sheet 5: Sorting
-    // Sheet 6: QC
-    // Sheet 7: Packaging
-    // Sheet 8: Personnel
-    // Sheet 9: Energy
-    
+    // Strategy: Fetch all sheets in parallel
     // We append ?sheet=X to the base URL
     const fetchSheet = async (index: number) => {
       // Handle URLs that already have query params
@@ -150,14 +160,6 @@ export const fetchFactoryData = async (baseUrl: string = DEFAULT_GOOGLE_SCRIPT_U
     
     clearTimeout(timeoutId);
 
-    // Map the array of results to the DashboardData structure
-    // We assume the Google Sheet returns JSON that matches or closely resembles our types.
-    // In a real app, we would use Zod or similar for validation. Here we cast and pray (or fallback).
-    
-    // Note: If the user provides a single endpoint that returns ALL data (sheet=undefined), 
-    // the code below would need to be different. 
-    // But the prompt "Page 1 links to Sheet 1" strongly suggests separation.
-    
     return {
       overview: results[0] as DashboardData['overview'],
       headingMachines: results[1] as StandardMachine[],
@@ -174,4 +176,67 @@ export const fetchFactoryData = async (baseUrl: string = DEFAULT_GOOGLE_SCRIPT_U
     console.warn("API Fetch failed, using fallback mock data. Error:", error);
     return getMockData();
   }
+};
+
+/**
+ * Sends a POST request to the Google Script to initialize columns and write data.
+ */
+export const syncDataToGoogleSheet = async (baseUrl: string, data: DashboardData): Promise<void> => {
+  if (!baseUrl) throw new Error("No API URL provided");
+
+  // Transform complex data into flat sheet structures
+  // Sheet 1: Overview
+  const sheet1Headers = ['Total OEE', 'Active Machines', 'Total Machines', 'Daily Output'];
+  const sheet1Rows = [[data.overview.totalOEE, data.overview.activeMachines, data.overview.totalMachines, data.overview.dailyOutput]];
+
+  // Helper for Standard Machines
+  const machineHeaders = ['ID', 'Name', 'Status', 'WorkOrder', 'TotalProduction', 'CurrentMoldProduction', 'ErrorMessage'];
+  const mapStandard = (m: StandardMachine) => [m.id, m.name, m.status, m.workOrder, m.totalProduction, m.currentMoldProduction, m.errorMessage || ''];
+
+  // Sheet 5: Sorting
+  const sortHeaders = ['ID', 'Name', 'Status', 'WorkOrder', 'TotalProduction', 'YieldRate'];
+  const mapSorting = (m: SortingMachine) => [m.id, m.name, m.status, m.workOrder, m.totalProduction, m.yieldRate];
+
+  // Sheet 6: QC
+  const qcHeaders = ['ID', 'Name', 'Status', 'CurrentLot', 'SampleYield', 'Defects(JSON)'];
+  const mapQC = (m: QCMachine) => [m.id, m.name, m.status, m.currentLot, m.sampleYield, JSON.stringify(m.defects)];
+
+  // Sheet 7: Packaging
+  const pkgHeaders = ['ID', 'Name', 'Status', 'WorkOrder', 'TotalProduction', 'Speed'];
+  const mapPkg = (m: PackagingMachine) => [m.id, m.name, m.status, m.workOrder, m.totalProduction, m.speed];
+
+  // Sheet 8: Personnel
+  const hrHeaders = ['Department', 'Headcount', 'Present', 'AttendanceRate'];
+  const mapHR = (p: PersonnelData) => [p.department, p.headcount, p.present, p.attendanceRate];
+
+  // Sheet 9: Energy
+  const energyHeaders = ['ID', 'Name', 'DailyConsumption', 'Trend(JSON)'];
+  const mapEnergy = (e: EnergyBlock) => [e.id, e.name, e.dailyConsumption, JSON.stringify(e.trend)];
+
+  const payload = {
+    action: 'sync',
+    sheets: {
+      '1': { name: 'Overview', headers: sheet1Headers, rows: sheet1Rows },
+      '2': { name: 'Heading', headers: machineHeaders, rows: data.headingMachines.map(mapStandard) },
+      '3': { name: 'Threading', headers: machineHeaders, rows: data.threadingMachines.map(mapStandard) },
+      '4': { name: 'Pointing', headers: machineHeaders, rows: data.pointingMachines.map(mapStandard) },
+      '5': { name: 'Sorting', headers: sortHeaders, rows: data.sortingMachines.map(mapSorting) },
+      '6': { name: 'QC', headers: qcHeaders, rows: data.qcMachines.map(mapQC) },
+      '7': { name: 'Packaging', headers: pkgHeaders, rows: data.packagingMachines.map(mapPkg) },
+      '8': { name: 'Personnel', headers: hrHeaders, rows: data.personnel.map(mapHR) },
+      '9': { name: 'Energy', headers: energyHeaders, rows: data.energy.map(mapEnergy) },
+    }
+  };
+
+  // We use mode: 'no-cors' because GAS Web Apps don't always handle CORS Preflight for POST requests easily without specific script setups.
+  // Using no-cors means we can send data, but we can't read the response. 
+  // The User Interface will assume success if no network error is thrown.
+  await fetch(baseUrl, {
+    method: 'POST',
+    mode: 'no-cors', 
+    headers: {
+      'Content-Type': 'text/plain;charset=utf-8', // Plain text avoids preflight
+    },
+    body: JSON.stringify(payload)
+  });
 };

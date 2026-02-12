@@ -38,7 +38,7 @@ const MachineGrid: React.FC<MachineGridProps> = ({ title, machines }) => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-sm">
           <div className="flex items-center justify-between">
-            <h3 className="text-slate-400 text-sm font-medium">Total Machines</h3>
+            <h3 className="text-slate-400 text-sm font-medium">機台總數</h3>
             <Activity size={18} className="text-brand-400" />
           </div>
           <p className="text-2xl font-bold text-white mt-2">{machines.length}</p>
@@ -48,7 +48,7 @@ const MachineGrid: React.FC<MachineGridProps> = ({ title, machines }) => {
           className={`bg-slate-800 p-4 rounded-xl border cursor-pointer transition-all ${filter === 'All' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-slate-700 hover:border-slate-600'}`}
         >
           <div className="flex items-center justify-between">
-            <h3 className="text-slate-400 text-sm font-medium">Running</h3>
+            <h3 className="text-slate-400 text-sm font-medium">運作中</h3>
             <CheckCircle size={18} className="text-green-400" />
           </div>
           <p className="text-2xl font-bold text-green-400 mt-2">{stats.running}</p>
@@ -58,7 +58,7 @@ const MachineGrid: React.FC<MachineGridProps> = ({ title, machines }) => {
            className={`bg-slate-800 p-4 rounded-xl border cursor-pointer transition-all ${filter === MachineStatus.Stopped ? 'border-slate-500 ring-1 ring-slate-500' : 'border-slate-700 hover:border-slate-600'}`}
         >
           <div className="flex items-center justify-between">
-            <h3 className="text-slate-400 text-sm font-medium">Stopped</h3>
+            <h3 className="text-slate-400 text-sm font-medium">停機</h3>
             <PauseCircle size={18} className="text-slate-400" />
           </div>
           <p className="text-2xl font-bold text-slate-400 mt-2">{stats.stopped}</p>
@@ -68,7 +68,7 @@ const MachineGrid: React.FC<MachineGridProps> = ({ title, machines }) => {
            className={`bg-slate-800 p-4 rounded-xl border cursor-pointer transition-all ${filter === MachineStatus.Error ? 'border-red-500 ring-1 ring-red-500' : 'border-slate-700 hover:border-slate-600'}`}
         >
           <div className="flex items-center justify-between">
-            <h3 className="text-slate-400 text-sm font-medium">Errors</h3>
+            <h3 className="text-slate-400 text-sm font-medium">異常</h3>
             <AlertTriangle size={18} className="text-red-400" />
           </div>
           <p className="text-2xl font-bold text-red-400 mt-2">{stats.error}</p>
@@ -78,8 +78,8 @@ const MachineGrid: React.FC<MachineGridProps> = ({ title, machines }) => {
       {/* Grid */}
       <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
         <div className="flex justify-between items-center mb-4">
-           <h2 className="text-lg font-bold text-white">{title} List</h2>
-           <span className="text-xs text-slate-500">Showing {filteredMachines.length} machines</span>
+           <h2 className="text-lg font-bold text-white">{title} 列表</h2>
+           <span className="text-xs text-slate-500">顯示 {filteredMachines.length} 台機器</span>
         </div>
         
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
@@ -101,11 +101,11 @@ const MachineGrid: React.FC<MachineGridProps> = ({ title, machines }) => {
                   {machine.workOrder}
                 </div>
                 <div className="flex justify-between text-xs font-mono mt-1">
-                  <span className="opacity-70">Cur:</span>
+                  <span className="opacity-70">當前:</span>
                   <span className="font-bold">{machine.currentMoldProduction.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-xs font-mono">
-                  <span className="opacity-70">Tot:</span>
+                  <span className="opacity-70">累計:</span>
                   <span className="font-bold">{machine.totalProduction.toLocaleString()}</span>
                 </div>
               </div>

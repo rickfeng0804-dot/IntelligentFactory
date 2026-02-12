@@ -21,7 +21,7 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: 'overview', label: '主畫面 (Overview)', icon: LayoutDashboard },
+  { id: 'overview', label: '工廠總覽 (Overview)', icon: LayoutDashboard },
   { id: 'heading', label: '打頭機 (Heading)', icon: Hammer },
   { id: 'threading', label: '搓牙機 (Threading)', icon: Disc },
   { id: 'pointing', label: '夾尾機 (Pointing)', icon: Scissors },
@@ -81,13 +81,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isOpen, to
           ))}
           
           <div className="pt-8 px-4">
-             <p className="text-xs text-slate-500 uppercase font-semibold mb-2">System Status</p>
+             <p className="text-xs text-slate-500 uppercase font-semibold mb-2">系統狀態</p>
              <div className="flex items-center space-x-2 text-xs text-green-400">
                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-               <span>System Online</span>
+               <span>系統連線中</span>
              </div>
              <div className="flex items-center space-x-2 text-xs text-slate-400 mt-1">
-               <span>Last Sync: {new Date().toLocaleTimeString()}</span>
+               <span>最後同步: {new Date().toLocaleTimeString()}</span>
              </div>
           </div>
         </nav>

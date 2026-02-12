@@ -47,6 +47,11 @@ const App: React.FC = () => {
     loadData(newUrl); // Trigger immediate reload
   };
 
+  // Allow manual data injection (e.g. from CSV Import)
+  const handleManualDataUpdate = (newData: DashboardData) => {
+    setData(newData);
+  };
+
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
   const renderContent = () => {
@@ -54,7 +59,7 @@ const App: React.FC = () => {
       return (
         <div className="flex flex-col items-center justify-center h-full text-slate-400">
            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mb-4"></div>
-           <p>Connecting to Factory Data...</p>
+           <p>正在連接工廠數據...</p>
         </div>
       );
     }
@@ -63,11 +68,11 @@ const App: React.FC = () => {
       case 'overview':
         return <Overview data={data} />;
       case 'heading':
-        return <MachineGrid title="Heading Machines" machines={data.headingMachines} />;
+        return <MachineGrid title="打頭機 (Heading Machines)" machines={data.headingMachines} />;
       case 'threading':
-        return <MachineGrid title="Thread Rolling Machines" machines={data.threadingMachines} />;
+        return <MachineGrid title="搓牙機 (Threading Machines)" machines={data.threadingMachines} />;
       case 'pointing':
-        return <MachineGrid title="Pointing Machines" machines={data.pointingMachines} />;
+        return <MachineGrid title="夾尾機 (Pointing Machines)" machines={data.pointingMachines} />;
       case 'sorting':
         return <SortingDashboard machines={data.sortingMachines} />;
       case 'qc':
@@ -80,6 +85,22 @@ const App: React.FC = () => {
         return <EnergyDashboard blocks={data.energy} />;
       default:
         return <Overview data={data} />;
+    }
+  };
+
+  // Map view IDs to Chinese Titles for Header
+  const getHeaderTitle = (view: string) => {
+    switch(view) {
+      case 'overview': return '工廠總覽看板';
+      case 'heading': return '打頭機監控';
+      case 'threading': return '搓牙機監控';
+      case 'pointing': return '夾尾機監控';
+      case 'sorting': return '篩選機監控';
+      case 'qc': return '品質管理看板';
+      case 'packaging': return '包裝機監控';
+      case 'personnel': return '人員管理';
+      case 'energy': return '耗能管理';
+      default: return '看板';
     }
   };
 
@@ -104,7 +125,7 @@ const App: React.FC = () => {
           
           <div className="flex-1 px-4">
              <h1 className="text-xl font-bold text-white hidden md:block">
-               {currentView.charAt(0).toUpperCase() + currentView.slice(1)} Dashboard
+               {getHeaderTitle(currentView)}
              </h1>
           </div>
 
@@ -118,8 +139,8 @@ const App: React.FC = () => {
             </button>
 
             <div className="hidden md:flex flex-col items-end mr-2">
-              <span className="text-sm font-bold text-slate-200">Admin User</span>
-              <span className="text-xs text-slate-500">Factory Manager</span>
+              <span className="text-sm font-bold text-slate-200">管理員</span>
+              <span className="text-xs text-slate-500">廠務經理</span>
             </div>
             <div className="w-10 h-10 rounded-full bg-slate-700 border-2 border-brand-500 flex items-center justify-center">
               <span className="font-bold text-sm">AU</span>
@@ -140,6 +161,8 @@ const App: React.FC = () => {
         onClose={() => setIsSettingsOpen(false)}
         onSave={handleSettingsUpdate}
         currentUrl={apiUrl}
+        currentData={data}
+        onDataUpdate={handleManualDataUpdate}
       />
     </div>
   );

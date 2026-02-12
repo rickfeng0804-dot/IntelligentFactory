@@ -25,7 +25,7 @@ const Overview: React.FC<OverviewProps> = ({ data }) => {
   }));
 
   const oeeTrend = Array.from({ length: 7 }).map((_, i) => ({
-    day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
+    day: ['週一', '週二', '週三', '週四', '週五', '週六', '週日'][i],
     value: 80 + Math.random() * 15
   }));
 
@@ -40,7 +40,7 @@ const Overview: React.FC<OverviewProps> = ({ data }) => {
             </div>
             <span className="text-xs font-medium text-green-400 bg-green-500/10 px-2 py-1 rounded">+2.5%</span>
           </div>
-          <h3 className="text-slate-400 text-sm font-medium">Overall OEE</h3>
+          <h3 className="text-slate-400 text-sm font-medium">整體設備效率 (OEE)</h3>
           <p className="text-3xl font-bold text-white mt-1">{data.overview.totalOEE}%</p>
         </div>
 
@@ -50,7 +50,7 @@ const Overview: React.FC<OverviewProps> = ({ data }) => {
               <Package size={24} />
             </div>
           </div>
-          <h3 className="text-slate-400 text-sm font-medium">Daily Output</h3>
+          <h3 className="text-slate-400 text-sm font-medium">單日總產量</h3>
           <p className="text-3xl font-bold text-white mt-1">{data.overview.dailyOutput.toLocaleString()}</p>
         </div>
 
@@ -60,7 +60,7 @@ const Overview: React.FC<OverviewProps> = ({ data }) => {
               <Zap size={24} />
             </div>
           </div>
-          <h3 className="text-slate-400 text-sm font-medium">Active Machines</h3>
+          <h3 className="text-slate-400 text-sm font-medium">運作中機台</h3>
           <p className="text-3xl font-bold text-white mt-1">
             {data.overview.activeMachines} <span className="text-lg text-slate-500 font-normal">/ {data.overview.totalMachines}</span>
           </p>
@@ -72,7 +72,7 @@ const Overview: React.FC<OverviewProps> = ({ data }) => {
               <Users size={24} />
             </div>
           </div>
-          <h3 className="text-slate-400 text-sm font-medium">Personnel On-site</h3>
+          <h3 className="text-slate-400 text-sm font-medium">現場人員</h3>
           <p className="text-3xl font-bold text-white mt-1">
             {data.personnel.reduce((acc, curr) => acc + curr.present, 0)}
           </p>
@@ -82,7 +82,7 @@ const Overview: React.FC<OverviewProps> = ({ data }) => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700">
-          <h3 className="text-lg font-bold text-white mb-6">Real-time Production Output</h3>
+          <h3 className="text-lg font-bold text-white mb-6">即時生產趨勢</h3>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={productionTrend}>
@@ -91,8 +91,10 @@ const Overview: React.FC<OverviewProps> = ({ data }) => {
                 <YAxis stroke="#94a3b8" />
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
+                  labelStyle={{ color: '#94a3b8' }}
                 />
                 <Line 
+                  name="產量"
                   type="monotone" 
                   dataKey="output" 
                   stroke="#0ea5e9" 
@@ -105,7 +107,7 @@ const Overview: React.FC<OverviewProps> = ({ data }) => {
         </div>
 
         <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
-          <h3 className="text-lg font-bold text-white mb-6">Weekly OEE Trend</h3>
+          <h3 className="text-lg font-bold text-white mb-6">每週 OEE 趨勢</h3>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={oeeTrend}>
@@ -115,8 +117,9 @@ const Overview: React.FC<OverviewProps> = ({ data }) => {
                 <Tooltip 
                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
                    cursor={{fill: '#334155', opacity: 0.4}}
+                   labelStyle={{ color: '#94a3b8' }}
                 />
-                <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                <Bar name="效率" dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
