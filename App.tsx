@@ -91,7 +91,7 @@ const App: React.FC = () => {
   // Map view IDs to Chinese Titles for Header
   const getHeaderTitle = (view: string) => {
     switch(view) {
-      case 'overview': return '工廠總覽看板';
+      case 'overview': return '智慧工廠管理系統-分享版';
       case 'heading': return '打頭機監控';
       case 'threading': return '搓牙機監控';
       case 'pointing': return '夾尾機監控';
