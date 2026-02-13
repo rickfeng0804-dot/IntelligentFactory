@@ -63,6 +63,8 @@ export interface DashboardData {
     activeMachines: number;
     totalMachines: number;
     dailyOutput: number;
+    productionTrend?: { time: string; output: number }[];
+    oeeTrend?: { day: string; value: number }[];
   };
   headingMachines: StandardMachine[];
   threadingMachines: StandardMachine[];
@@ -72,12 +74,4 @@ export interface DashboardData {
   packagingMachines: PackagingMachine[];
   personnel: PersonnelData[];
   energy: EnergyBlock[];
-}
-
-export interface AppNotification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'warning' | 'error' | 'success';
-  timestamp: number;
 }

@@ -9,7 +9,7 @@ interface PackagingDashboardProps {
 const PackagingDashboard: React.FC<PackagingDashboardProps> = ({ machines }) => {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">包裝機監控 (Packaging Machines)</h2>
+      <h2 className="text-2xl font-bold text-white">Packaging Machines (包裝機)</h2>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {machines.map((machine) => (
@@ -25,7 +25,7 @@ const PackagingDashboard: React.FC<PackagingDashboardProps> = ({ machines }) => 
                     </div>
                  </div>
                  <span className={`px-4 py-1 rounded-full text-sm font-bold ${machine.status === MachineStatus.Running ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                    {machine.status === 'Running' ? '運作中' : '異常'}
+                    {machine.status}
                  </span>
               </div>
 
@@ -33,25 +33,25 @@ const PackagingDashboard: React.FC<PackagingDashboardProps> = ({ machines }) => 
                  <div className="bg-slate-900/50 rounded-xl p-6 flex flex-col items-center justify-center">
                     <div className="flex items-center gap-2 text-slate-400 mb-2">
                        <Gauge size={20} />
-                       <span>包裝速度</span>
+                       <span>Speed</span>
                     </div>
                     <p className="text-4xl font-bold text-white">{machine.speed}</p>
-                    <p className="text-xs text-slate-500 mt-1">包 / 分</p>
+                    <p className="text-xs text-slate-500 mt-1">Packs / Min</p>
                  </div>
                  
                  <div className="bg-slate-900/50 rounded-xl p-6 flex flex-col items-center justify-center">
                     <div className="flex items-center gap-2 text-slate-400 mb-2">
                        <Package size={20} />
-                       <span>累計產量</span>
+                       <span>Accumulated</span>
                     </div>
                     <p className="text-4xl font-bold text-brand-400">{machine.totalProduction}</p>
-                    <p className="text-xs text-slate-500 mt-1">總包數</p>
+                    <p className="text-xs text-slate-500 mt-1">Total Packs</p>
                  </div>
               </div>
               
               <div className="mt-8 bg-slate-700/30 rounded-lg p-4">
                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-slate-300">運作效率</span>
+                    <span className="text-slate-300">Efficiency</span>
                     <span className="text-white font-bold">92%</span>
                  </div>
                  <div className="w-full bg-slate-700 h-3 rounded-full overflow-hidden">

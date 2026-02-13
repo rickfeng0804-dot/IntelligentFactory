@@ -9,7 +9,7 @@ interface PersonnelDashboardProps {
 const PersonnelDashboard: React.FC<PersonnelDashboardProps> = ({ data }) => {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">人員管理看板 (Personnel Management)</h2>
+      <h2 className="text-2xl font-bold text-white">Personnel Management (人員管理)</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {data.map((dept, index) => (
@@ -24,7 +24,7 @@ const PersonnelDashboard: React.FC<PersonnelDashboardProps> = ({ data }) => {
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2 text-slate-400">
                    <Users size={16} />
-                   <span>編制人數</span>
+                   <span>Headcount</span>
                 </div>
                 <span className="text-white font-mono font-bold">{dept.headcount}</span>
               </div>
@@ -32,14 +32,14 @@ const PersonnelDashboard: React.FC<PersonnelDashboardProps> = ({ data }) => {
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2 text-slate-400">
                    <UserCheck size={16} />
-                   <span>實到人數</span>
+                   <span>Present</span>
                 </div>
                 <span className="text-green-400 font-mono font-bold">{dept.present}</span>
               </div>
 
               <div className="mt-4 pt-4 border-t border-slate-700">
                  <div className="flex justify-between items-end mb-1">
-                   <span className="text-sm text-slate-400">出勤率</span>
+                   <span className="text-sm text-slate-400">Attendance</span>
                    <span className={`text-2xl font-bold ${dept.attendanceRate >= 95 ? 'text-green-400' : 'text-yellow-400'}`}>
                      {dept.attendanceRate}%
                    </span>
@@ -60,15 +60,15 @@ const PersonnelDashboard: React.FC<PersonnelDashboardProps> = ({ data }) => {
          <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Clock size={20} className="text-brand-400" />
-              班別資訊
+              Shift Information
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between p-3 bg-slate-900/50 rounded-lg">
-                 <span className="text-slate-300">早班 (Day Shift)</span>
+                 <span className="text-slate-300">Day Shift</span>
                  <span className="text-white font-mono">08:00 - 17:00</span>
               </div>
               <div className="flex justify-between p-3 bg-slate-900/50 rounded-lg">
-                 <span className="text-slate-300">晚班 (Night Shift)</span>
+                 <span className="text-slate-300">Night Shift</span>
                  <span className="text-white font-mono">20:00 - 05:00</span>
               </div>
             </div>

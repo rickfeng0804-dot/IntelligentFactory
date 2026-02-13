@@ -1,3 +1,4 @@
+
 import { 
   DashboardData, 
   StandardMachine, 
@@ -5,7 +6,8 @@ import {
   QCMachine, 
   PackagingMachine, 
   PersonnelData, 
-  EnergyBlock 
+  EnergyBlock,
+  MachineStatus
 } from '../types';
 
 // Headers definition matching the Google Sheet logic
@@ -116,8 +118,7 @@ const parseCSVLine = (line: string): string[] => {
   return result;
 };
 
-export const parseCSVImport = async (key: keyof typeof CSV_CONFIG, file: File): Promise<any> => {
-  const text = await file.text();
+export const convertCSVTextToData = (key: keyof typeof CSV_CONFIG, text: string): any => {
   const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
   
   // Skip header row
@@ -132,7 +133,10 @@ export const parseCSVImport = async (key: keyof typeof CSV_CONFIG, file: File): 
     };
     
     // Helper to safe parse numbers
-    const parseNum = (val: string) => Number(val) || 0;
+    const parseNum = (val: string) => {
+      const num = Number(val);
+      return isNaN(num) ? 0 : num;
+    };
 
     switch (key) {
       case 'overview':
@@ -148,7 +152,7 @@ export const parseCSVImport = async (key: keyof typeof CSV_CONFIG, file: File): 
         return {
           id: cols[0],
           name: cols[1],
-          status: cols[2],
+          status: cols[2] as MachineStatus,
           workOrder: cols[3],
           totalProduction: parseNum(cols[4]),
           currentMoldProduction: parseNum(cols[5]),
@@ -158,7 +162,7 @@ export const parseCSVImport = async (key: keyof typeof CSV_CONFIG, file: File): 
         return {
           id: cols[0],
           name: cols[1],
-          status: cols[2],
+          status: cols[2] as MachineStatus,
           workOrder: cols[3],
           totalProduction: parseNum(cols[4]),
           yieldRate: parseNum(cols[5]),
@@ -168,7 +172,7 @@ export const parseCSVImport = async (key: keyof typeof CSV_CONFIG, file: File): 
         return {
           id: cols[0],
           name: cols[1],
-          status: cols[2],
+          status: cols[2] as MachineStatus,
           currentLot: cols[3],
           sampleYield: parseNum(cols[4]),
           defects: parseJson(cols[5])
@@ -177,7 +181,7 @@ export const parseCSVImport = async (key: keyof typeof CSV_CONFIG, file: File): 
         return {
           id: cols[0],
           name: cols[1],
-          status: cols[2],
+          status: cols[2] as MachineStatus,
           workOrder: cols[3],
           totalProduction: parseNum(cols[4]),
           speed: parseNum(cols[5])
@@ -199,5 +203,10 @@ export const parseCSVImport = async (key: keyof typeof CSV_CONFIG, file: File): 
       default:
         return null;
     }
-  });
+  }).filter((item: any) => item !== null);
+};
+
+export const parseCSVImport = async (key: keyof typeof CSV_CONFIG, file: File): Promise<any> => {
+  const text = await file.text();
+  return convertCSVTextToData(key, text);
 };

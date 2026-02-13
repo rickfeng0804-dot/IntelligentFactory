@@ -8,8 +8,9 @@ import {
   PersonnelData, 
   EnergyBlock 
 } from '../types';
+import { CSV_CONFIG, convertCSVTextToData } from './csvUtils';
 
-export const DEFAULT_GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxbwkcUPRvuSsJX7WTxKT2QzlYV4ZGKR09kcMobBpFUIGumOGvaHX1VAE9G1TlBa_me/exec';
+export const DEFAULT_CSV_PATH = 'C:\\SmartFactory';
 
 // --- MOCK DATA GENERATORS (Fallback) ---
 
@@ -27,13 +28,10 @@ const generateWorkOrder = (): string => {
   
   switch (type) {
     case 0:
-      // Format 1: JB11511876 (JB + 8 digits)
       return `JB${randomDigits(8)}`;
     case 1:
-      // Format 2: AB260701 (AB + 6 digits)
       return `AB${randomDigits(6)}`;
     case 2:
-      // Format 3: GP2026/0203 (GP + 4 digits + / + 4 digits)
       return `GP${randomDigits(4)}/${randomDigits(4)}`;
     default:
       return `JB${randomDigits(8)}`;
@@ -110,7 +108,15 @@ export const getMockData = (): DashboardData => ({
     totalOEE: 87.5,
     activeMachines: 245,
     totalMachines: 274,
-    dailyOutput: 1542000
+    dailyOutput: 1542000,
+    productionTrend: Array.from({ length: 12 }).map((_, i) => ({
+      time: `${i * 2}:00`,
+      output: Math.floor(Math.random() * 50000) + 100000
+    })),
+    oeeTrend: Array.from({ length: 7 }).map((_, i) => ({
+      day: ['週一', '週二', '週三', '週四', '週五', '週六', '週日'][i],
+      value: 80 + Math.random() * 15
+    }))
   },
   headingMachines: generateStandardMachines(100, 'HD'), // Sheet 2
   threadingMachines: generateStandardMachines(100, 'TR'), // Sheet 3
@@ -127,116 +133,68 @@ export const getMockData = (): DashboardData => ({
   energy: generateEnergyBlocks(20) // Sheet 9
 });
 
-// --- API FUNCTIONS ---
+// --- API FUNCTIONS (CSV PATH BASED) ---
 
-export const fetchFactoryData = async (baseUrl: string = DEFAULT_GOOGLE_SCRIPT_URL): Promise<DashboardData> => {
-  // If no URL is provided/configured, strictly use mock
-  if (!baseUrl || baseUrl.trim() === '') {
-    return getMockData();
-  }
-
+const fetchCSV = async (basePath: string, fileName: string): Promise<string | null> => {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout for real data
-
-    // Strategy: Fetch all sheets in parallel
-    // We append ?sheet=X to the base URL
-    const fetchSheet = async (index: number) => {
-      // Handle URLs that already have query params
-      const separator = baseUrl.includes('?') ? '&' : '?';
-      const url = `${baseUrl}${separator}sheet=${index}`;
-      
-      const res = await fetch(url, {
-        method: 'GET',
-        signal: controller.signal,
-        redirect: 'follow'
-      });
-      if (!res.ok) throw new Error(`Failed to fetch sheet ${index}`);
-      return res.json();
-    };
-
-    const promises = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => fetchSheet(i));
-    const results = await Promise.all(promises);
+    // Normalize path slashes
+    const normalizedPath = basePath.replace(/\\/g, '/').replace(/\/$/, '');
+    const url = `${normalizedPath}/${fileName}`;
     
-    clearTimeout(timeoutId);
-
-    return {
-      overview: results[0] as DashboardData['overview'],
-      headingMachines: results[1] as StandardMachine[],
-      threadingMachines: results[2] as StandardMachine[],
-      pointingMachines: results[3] as StandardMachine[],
-      sortingMachines: results[4] as SortingMachine[],
-      qcMachines: results[5] as QCMachine[],
-      packagingMachines: results[6] as PackagingMachine[],
-      personnel: results[7] as PersonnelData[],
-      energy: results[8] as EnergyBlock[]
-    };
-
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    return await response.text();
   } catch (error) {
-    console.warn("API Fetch failed, using fallback mock data. Error:", error);
-    return getMockData();
+    return null;
   }
 };
 
-/**
- * Sends a POST request to the Google Script to initialize columns and write data.
- */
-export const syncDataToGoogleSheet = async (baseUrl: string, data: DashboardData): Promise<void> => {
-  if (!baseUrl) throw new Error("No API URL provided");
+export const fetchFactoryData = async (basePath: string = DEFAULT_CSV_PATH): Promise<DashboardData> => {
+  // Try to fetch all required CSVs
+  // If fetch fails (likely due to CORS or file not found on local path), return Mock Data.
+  
+  const mock = getMockData();
+  
+  try {
+    const keys = Object.keys(CSV_CONFIG) as (keyof typeof CSV_CONFIG)[];
+    const promises = keys.map(async (key) => {
+      const fileName = `${key}.csv`;
+      const text = await fetchCSV(basePath, fileName);
+      if (!text) return { key, data: null };
+      return { key, data: convertCSVTextToData(key, text) };
+    });
 
-  // Transform complex data into flat sheet structures
-  // Sheet 1: Overview
-  const sheet1Headers = ['Total OEE', 'Active Machines', 'Total Machines', 'Daily Output'];
-  const sheet1Rows = [[data.overview.totalOEE, data.overview.activeMachines, data.overview.totalMachines, data.overview.dailyOutput]];
+    const results = await Promise.all(promises);
+    const fetchedData: any = {};
+    let hasValidData = false;
 
-  // Helper for Standard Machines
-  const machineHeaders = ['ID', 'Name', 'Status', 'WorkOrder', 'TotalProduction', 'CurrentMoldProduction', 'ErrorMessage'];
-  const mapStandard = (m: StandardMachine) => [m.id, m.name, m.status, m.workOrder, m.totalProduction, m.currentMoldProduction, m.errorMessage || ''];
+    results.forEach(res => {
+      if (res.data) {
+        fetchedData[res.key] = res.data;
+        hasValidData = true;
+      }
+    });
 
-  // Sheet 5: Sorting
-  const sortHeaders = ['ID', 'Name', 'Status', 'WorkOrder', 'TotalProduction', 'YieldRate'];
-  const mapSorting = (m: SortingMachine) => [m.id, m.name, m.status, m.workOrder, m.totalProduction, m.yieldRate];
-
-  // Sheet 6: QC
-  const qcHeaders = ['ID', 'Name', 'Status', 'CurrentLot', 'SampleYield', 'Defects(JSON)'];
-  const mapQC = (m: QCMachine) => [m.id, m.name, m.status, m.currentLot, m.sampleYield, JSON.stringify(m.defects)];
-
-  // Sheet 7: Packaging
-  const pkgHeaders = ['ID', 'Name', 'Status', 'WorkOrder', 'TotalProduction', 'Speed'];
-  const mapPkg = (m: PackagingMachine) => [m.id, m.name, m.status, m.workOrder, m.totalProduction, m.speed];
-
-  // Sheet 8: Personnel
-  const hrHeaders = ['Department', 'Headcount', 'Present', 'AttendanceRate'];
-  const mapHR = (p: PersonnelData) => [p.department, p.headcount, p.present, p.attendanceRate];
-
-  // Sheet 9: Energy
-  const energyHeaders = ['ID', 'Name', 'DailyConsumption', 'Trend(JSON)'];
-  const mapEnergy = (e: EnergyBlock) => [e.id, e.name, e.dailyConsumption, JSON.stringify(e.trend)];
-
-  const payload = {
-    action: 'sync',
-    sheets: {
-      '1': { name: 'Overview', headers: sheet1Headers, rows: sheet1Rows },
-      '2': { name: 'Heading', headers: machineHeaders, rows: data.headingMachines.map(mapStandard) },
-      '3': { name: 'Threading', headers: machineHeaders, rows: data.threadingMachines.map(mapStandard) },
-      '4': { name: 'Pointing', headers: machineHeaders, rows: data.pointingMachines.map(mapStandard) },
-      '5': { name: 'Sorting', headers: sortHeaders, rows: data.sortingMachines.map(mapSorting) },
-      '6': { name: 'QC', headers: qcHeaders, rows: data.qcMachines.map(mapQC) },
-      '7': { name: 'Packaging', headers: pkgHeaders, rows: data.packagingMachines.map(mapPkg) },
-      '8': { name: 'Personnel', headers: hrHeaders, rows: data.personnel.map(mapHR) },
-      '9': { name: 'Energy', headers: energyHeaders, rows: data.energy.map(mapEnergy) },
+    if (!hasValidData) {
+      console.warn("No valid CSV data found at path, using mock data.");
+      return mock;
     }
-  };
 
-  // We use mode: 'no-cors' because GAS Web Apps don't always handle CORS Preflight for POST requests easily without specific script setups.
-  // Using no-cors means we can send data, but we can't read the response. 
-  // The User Interface will assume success if no network error is thrown.
-  await fetch(baseUrl, {
-    method: 'POST',
-    mode: 'no-cors', 
-    headers: {
-      'Content-Type': 'text/plain;charset=utf-8', // Plain text avoids preflight
-    },
-    body: JSON.stringify(payload)
-  });
+    // Merge fetched data with mock structure (in case some files are missing)
+    return {
+      overview: (fetchedData.overview && fetchedData.overview[0]) || mock.overview,
+      headingMachines: fetchedData.heading || mock.headingMachines,
+      threadingMachines: fetchedData.threading || mock.threadingMachines,
+      pointingMachines: fetchedData.pointing || mock.pointingMachines,
+      sortingMachines: fetchedData.sorting || mock.sortingMachines,
+      qcMachines: fetchedData.qc || mock.qcMachines,
+      packagingMachines: fetchedData.packaging || mock.packagingMachines,
+      personnel: fetchedData.personnel || mock.personnel,
+      energy: fetchedData.energy || mock.energy
+    };
+
+  } catch (error) {
+    console.error("Error loading CSV data:", error);
+    return mock;
+  }
 };

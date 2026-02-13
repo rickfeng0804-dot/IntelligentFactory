@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Menu, Settings, Bell } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Menu, Settings, RefreshCw } from 'lucide-react';
 import Sidebar from './components/Layout/Sidebar';
 import Overview from './components/Overview';
 import MachineGrid from './components/MachineGrid';
@@ -9,9 +9,8 @@ import PackagingDashboard from './components/PackagingDashboard';
 import PersonnelDashboard from './components/PersonnelDashboard';
 import EnergyDashboard from './components/EnergyDashboard';
 import SettingsModal from './components/SettingsModal';
-import NotificationToast from './components/NotificationToast';
-import { fetchFactoryData, DEFAULT_GOOGLE_SCRIPT_URL } from './services/api';
-import { DashboardData, AppNotification, MachineStatus, StandardMachine, SortingMachine, QCMachine, PackagingMachine } from './types';
+import { fetchFactoryData, DEFAULT_CSV_PATH } from './services/api';
+import { DashboardData } from './types';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<string>('overview');
@@ -19,130 +18,57 @@ const App: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Notification State
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const prevErrorIdsRef = useRef<Set<string>>(new Set());
-  const isFirstLoad = useRef(true);
-  
   // Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [apiUrl, setApiUrl] = useState<string>(() => {
-    return localStorage.getItem('factory_api_url') || DEFAULT_GOOGLE_SCRIPT_URL;
+  const [dataPath, setDataPath] = useState<string>(() => {
+    return localStorage.getItem('factory_data_path') || DEFAULT_CSV_PATH;
+  });
+  const [updateInterval, setUpdateInterval] = useState<number>(() => {
+    const saved = localStorage.getItem('factory_update_interval');
+    return saved ? parseInt(saved, 10) : 60;
   });
 
-  const checkForNewErrors = (newData: DashboardData) => {
-    const currentErrors = new Set<string>();
-    const newNotifications: AppNotification[] = [];
-
-    // Helper to check standard machines
-    const checkMachines = (machines: (StandardMachine | SortingMachine | PackagingMachine)[], typeName: string) => {
-      machines.forEach(m => {
-        if (m.status === MachineStatus.Error) {
-          currentErrors.add(m.id);
-          // If this ID wasn't in the previous error set, and it's not the first load
-          if (!prevErrorIdsRef.current.has(m.id) && !isFirstLoad.current) {
-            newNotifications.push({
-              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              title: '機台異常警報',
-              message: `${typeName} ${m.name} (${m.id}) 發生故障: ${('errorMessage' in m) ? m.errorMessage : '系統偵測到異常'}`,
-              type: 'error',
-              timestamp: Date.now()
-            });
-          }
-        }
-      });
-    };
-
-    // Helper for QC machines (slightly different structure)
-    const checkQC = (machines: QCMachine[]) => {
-      machines.forEach(m => {
-        if (m.status === MachineStatus.Error) {
-          currentErrors.add(m.id);
-          if (!prevErrorIdsRef.current.has(m.id) && !isFirstLoad.current) {
-             newNotifications.push({
-              id: `${Date.now()}-${Math.random()}`,
-              title: 'QC 設備警報',
-              message: `檢測機 ${m.name} 狀態異常`,
-              type: 'error',
-              timestamp: Date.now()
-            });
-          }
-        }
-      });
-    };
-
-    checkMachines(newData.headingMachines, '打頭機');
-    checkMachines(newData.threadingMachines, '搓牙機');
-    checkMachines(newData.pointingMachines, '夾尾機');
-    checkMachines(newData.sortingMachines, '篩選機');
-    checkMachines(newData.packagingMachines, '包裝機');
-    checkQC(newData.qcMachines);
-
-    if (newNotifications.length > 0) {
-      setNotifications(prev => [...newNotifications, ...prev].slice(0, 5)); // Keep most recent 5 on screen
-      setUnreadCount(prev => prev + newNotifications.length);
-    }
-
-    // Update refs
-    prevErrorIdsRef.current = currentErrors;
-    isFirstLoad.current = false;
-  };
-
-  const loadData = async (url: string) => {
+  const loadData = async (path: string) => {
     setLoading(true);
-    const result = await fetchFactoryData(url);
-    if (result) {
-      checkForNewErrors(result);
-      setData(result);
-    }
+    const result = await fetchFactoryData(path);
+    setData(result);
     setLoading(false);
   };
 
   useEffect(() => {
-    loadData(apiUrl);
+    loadData(dataPath);
 
-    const interval = setInterval(() => {
-      fetchFactoryData(apiUrl).then(result => {
-        if (result) {
-          checkForNewErrors(result);
-          setData(result);
-        }
-      });
-    }, 60000); // Check every minute
+    const intervalId = setInterval(() => {
+      fetchFactoryData(dataPath).then(result => setData(result));
+    }, updateInterval * 1000);
 
-    return () => clearInterval(interval);
-  }, [apiUrl]);
+    return () => clearInterval(intervalId);
+  }, [dataPath, updateInterval]);
 
-  const handleSettingsUpdate = (newUrl: string) => {
-    setApiUrl(newUrl);
-    localStorage.setItem('factory_api_url', newUrl);
-    loadData(newUrl); // Trigger immediate reload
+  const handleSettingsUpdate = (newPath: string, newInterval: number) => {
+    setDataPath(newPath);
+    setUpdateInterval(newInterval);
+    localStorage.setItem('factory_data_path', newPath);
+    localStorage.setItem('factory_update_interval', newInterval.toString());
+    loadData(newPath); // Trigger immediate reload
+  };
+
+  const handleManualRefresh = () => {
+    loadData(dataPath);
   };
 
   const handleManualDataUpdate = (newData: DashboardData) => {
-    checkForNewErrors(newData);
     setData(newData);
   };
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
-
-  const dismissNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  };
-
-  const clearUnread = () => {
-    setUnreadCount(0);
-    // Optionally clear notifications list or keep them visible but "read"
-    // For now we just reset the badge
-  };
 
   const renderContent = () => {
     if (loading || !data) {
       return (
         <div className="flex flex-col items-center justify-center h-full text-slate-400">
            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mb-4"></div>
-           <p>正在連接工廠數據...</p>
+           <p>正在讀取工廠數據...</p>
         </div>
       );
     }
@@ -212,22 +138,19 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-3">
-            {/* Notification Bell */}
+            {/* Manual Update Button */}
             <button 
-              onClick={clearUnread}
-              className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-colors"
-              title="Notifications"
+              onClick={handleManualRefresh}
+              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-colors flex items-center gap-2"
+              title="立即更新數據"
             >
-              <Bell size={20} />
-              {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-900 animate-pulse"></span>
-              )}
+              <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
             </button>
 
             <button 
               onClick={() => setIsSettingsOpen(true)}
               className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-colors"
-              title="Connection Settings"
+              title="系統設定"
             >
               <Settings size={20} />
             </button>
@@ -250,16 +173,12 @@ const App: React.FC = () => {
         </main>
       </div>
 
-      <NotificationToast 
-        notifications={notifications} 
-        onDismiss={dismissNotification} 
-      />
-
       <SettingsModal 
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)}
         onSave={handleSettingsUpdate}
-        currentUrl={apiUrl}
+        currentUrl={dataPath}
+        currentInterval={updateInterval}
         currentData={data}
         onDataUpdate={handleManualDataUpdate}
       />
