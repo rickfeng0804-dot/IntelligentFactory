@@ -1,3 +1,4 @@
+
 export enum MachineStatus {
   Running = 'Running',
   Stopped = 'Stopped',
@@ -71,4 +72,12 @@ export interface DashboardData {
   packagingMachines: PackagingMachine[];
   personnel: PersonnelData[];
   energy: EnergyBlock[];
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'error' | 'success';
+  timestamp: number;
 }

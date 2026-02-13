@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, Settings } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Menu, Settings, Bell } from 'lucide-react';
 import Sidebar from './components/Layout/Sidebar';
 import Overview from './components/Overview';
 import MachineGrid from './components/MachineGrid';
@@ -9,8 +9,9 @@ import PackagingDashboard from './components/PackagingDashboard';
 import PersonnelDashboard from './components/PersonnelDashboard';
 import EnergyDashboard from './components/EnergyDashboard';
 import SettingsModal from './components/SettingsModal';
+import NotificationToast from './components/NotificationToast';
 import { fetchFactoryData, DEFAULT_GOOGLE_SCRIPT_URL } from './services/api';
-import { DashboardData } from './types';
+import { DashboardData, AppNotification, MachineStatus, StandardMachine, SortingMachine, QCMachine, PackagingMachine } from './types';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<string>('overview');
@@ -18,16 +19,83 @@ const App: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   
+  // Notification State
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const prevErrorIdsRef = useRef<Set<string>>(new Set());
+  const isFirstLoad = useRef(true);
+  
   // Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [apiUrl, setApiUrl] = useState<string>(() => {
     return localStorage.getItem('factory_api_url') || DEFAULT_GOOGLE_SCRIPT_URL;
   });
 
+  const checkForNewErrors = (newData: DashboardData) => {
+    const currentErrors = new Set<string>();
+    const newNotifications: AppNotification[] = [];
+
+    // Helper to check standard machines
+    const checkMachines = (machines: (StandardMachine | SortingMachine | PackagingMachine)[], typeName: string) => {
+      machines.forEach(m => {
+        if (m.status === MachineStatus.Error) {
+          currentErrors.add(m.id);
+          // If this ID wasn't in the previous error set, and it's not the first load
+          if (!prevErrorIdsRef.current.has(m.id) && !isFirstLoad.current) {
+            newNotifications.push({
+              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              title: '機台異常警報',
+              message: `${typeName} ${m.name} (${m.id}) 發生故障: ${('errorMessage' in m) ? m.errorMessage : '系統偵測到異常'}`,
+              type: 'error',
+              timestamp: Date.now()
+            });
+          }
+        }
+      });
+    };
+
+    // Helper for QC machines (slightly different structure)
+    const checkQC = (machines: QCMachine[]) => {
+      machines.forEach(m => {
+        if (m.status === MachineStatus.Error) {
+          currentErrors.add(m.id);
+          if (!prevErrorIdsRef.current.has(m.id) && !isFirstLoad.current) {
+             newNotifications.push({
+              id: `${Date.now()}-${Math.random()}`,
+              title: 'QC 設備警報',
+              message: `檢測機 ${m.name} 狀態異常`,
+              type: 'error',
+              timestamp: Date.now()
+            });
+          }
+        }
+      });
+    };
+
+    checkMachines(newData.headingMachines, '打頭機');
+    checkMachines(newData.threadingMachines, '搓牙機');
+    checkMachines(newData.pointingMachines, '夾尾機');
+    checkMachines(newData.sortingMachines, '篩選機');
+    checkMachines(newData.packagingMachines, '包裝機');
+    checkQC(newData.qcMachines);
+
+    if (newNotifications.length > 0) {
+      setNotifications(prev => [...newNotifications, ...prev].slice(0, 5)); // Keep most recent 5 on screen
+      setUnreadCount(prev => prev + newNotifications.length);
+    }
+
+    // Update refs
+    prevErrorIdsRef.current = currentErrors;
+    isFirstLoad.current = false;
+  };
+
   const loadData = async (url: string) => {
     setLoading(true);
     const result = await fetchFactoryData(url);
-    setData(result);
+    if (result) {
+      checkForNewErrors(result);
+      setData(result);
+    }
     setLoading(false);
   };
 
@@ -35,8 +103,13 @@ const App: React.FC = () => {
     loadData(apiUrl);
 
     const interval = setInterval(() => {
-      fetchFactoryData(apiUrl).then(result => setData(result));
-    }, 60000);
+      fetchFactoryData(apiUrl).then(result => {
+        if (result) {
+          checkForNewErrors(result);
+          setData(result);
+        }
+      });
+    }, 60000); // Check every minute
 
     return () => clearInterval(interval);
   }, [apiUrl]);
@@ -47,12 +120,22 @@ const App: React.FC = () => {
     loadData(newUrl); // Trigger immediate reload
   };
 
-  // Allow manual data injection (e.g. from CSV Import)
   const handleManualDataUpdate = (newData: DashboardData) => {
+    checkForNewErrors(newData);
     setData(newData);
   };
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+  const dismissNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const clearUnread = () => {
+    setUnreadCount(0);
+    // Optionally clear notifications list or keep them visible but "read"
+    // For now we just reset the badge
+  };
 
   const renderContent = () => {
     if (loading || !data) {
@@ -88,7 +171,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Map view IDs to Chinese Titles for Header
   const getHeaderTitle = (view: string) => {
     switch(view) {
       case 'overview': return '智慧工廠管理系統-分享版';
@@ -129,7 +211,19 @@ const App: React.FC = () => {
              </h1>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
+            {/* Notification Bell */}
+            <button 
+              onClick={clearUnread}
+              className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-colors"
+              title="Notifications"
+            >
+              <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-900 animate-pulse"></span>
+              )}
+            </button>
+
             <button 
               onClick={() => setIsSettingsOpen(true)}
               className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-colors"
@@ -138,7 +232,7 @@ const App: React.FC = () => {
               <Settings size={20} />
             </button>
 
-            <div className="hidden md:flex flex-col items-end mr-2">
+            <div className="hidden md:flex flex-col items-end mr-2 ml-2">
               <span className="text-sm font-bold text-slate-200">管理員</span>
               <span className="text-xs text-slate-500">廠務經理</span>
             </div>
@@ -149,12 +243,17 @@ const App: React.FC = () => {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-900">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-900 relative">
           <div className="max-w-7xl mx-auto min-h-full">
             {renderContent()}
           </div>
         </main>
       </div>
+
+      <NotificationToast 
+        notifications={notifications} 
+        onDismiss={dismissNotification} 
+      />
 
       <SettingsModal 
         isOpen={isSettingsOpen} 
