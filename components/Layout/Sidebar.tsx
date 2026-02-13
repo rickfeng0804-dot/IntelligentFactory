@@ -21,7 +21,7 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: 'overview', label: '主畫面 (Overview)', icon: LayoutDashboard },
+  { id: 'overview', label: '工廠總覽 (Overview)', icon: LayoutDashboard },
   { id: 'heading', label: '打頭機 (Heading)', icon: Hammer },
   { id: 'threading', label: '搓牙機 (Threading)', icon: Disc },
   { id: 'pointing', label: '夾尾機 (Pointing)', icon: Scissors },
@@ -49,11 +49,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isOpen, to
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="flex items-center justify-between p-4 border-b border-slate-700 h-16">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center font-bold text-white">
+          <div className="flex items-center space-x-2 overflow-hidden">
+            <div className="w-8 h-8 min-w-[2rem] bg-brand-600 rounded-lg flex items-center justify-center font-bold text-white">
               Z
             </div>
-            <span className="font-bold text-lg tracking-wide truncate">志盈金屬</span>
+            <span className="font-bold text-sm tracking-wide truncate" title="志盈金屬企業股份有限公司">
+              志盈金屬企業股份有限公司
+            </span>
           </div>
           <button onClick={toggleSidebar} className="lg:hidden text-slate-400 hover:text-white">
             <X size={24} />
@@ -81,13 +83,13 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, isOpen, to
           ))}
           
           <div className="pt-8 px-4">
-             <p className="text-xs text-slate-500 uppercase font-semibold mb-2">System Status</p>
+             <p className="text-xs text-slate-500 uppercase font-semibold mb-2">系統狀態 (System Status)</p>
              <div className="flex items-center space-x-2 text-xs text-green-400">
                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-               <span>System Online</span>
+               <span>系統連線中 (System Online)</span>
              </div>
              <div className="flex items-center space-x-2 text-xs text-slate-400 mt-1">
-               <span>Last Sync: {new Date().toLocaleTimeString()}</span>
+               <span>最後同步 (Last Sync): {new Date().toLocaleTimeString()}</span>
              </div>
           </div>
         </nav>

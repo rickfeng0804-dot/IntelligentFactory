@@ -10,7 +10,7 @@ interface SortingDashboardProps {
 const SortingDashboard: React.FC<SortingDashboardProps> = ({ machines }) => {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Sorting Machines (篩選機)</h2>
+      <h2 className="text-2xl font-bold text-white">篩選機監控 (Sorting Machines)</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {machines.map((machine) => (
@@ -27,7 +27,7 @@ const SortingDashboard: React.FC<SortingDashboardProps> = ({ machines }) => {
                 <p className="text-sm text-slate-400">{machine.workOrder}</p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-slate-400">Yield Rate</p>
+                <p className="text-sm text-slate-400">良率 (Yield Rate)</p>
                 <p className={`text-xl font-bold ${machine.yieldRate > 98 ? 'text-green-400' : 'text-yellow-400'}`}>
                   {machine.yieldRate.toFixed(2)}%
                 </p>
@@ -36,11 +36,11 @@ const SortingDashboard: React.FC<SortingDashboardProps> = ({ machines }) => {
 
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="bg-slate-900/50 p-3 rounded-lg">
-                <p className="text-xs text-slate-500">Total Output</p>
+                <p className="text-xs text-slate-500">總產量 (Total Output)</p>
                 <p className="text-lg font-mono text-white">{machine.totalProduction.toLocaleString()}</p>
               </div>
               <div className="bg-slate-900/50 p-3 rounded-lg">
-                <p className="text-xs text-slate-500">Status</p>
+                <p className="text-xs text-slate-500">狀態 (Status)</p>
                 <p className={`text-lg font-medium ${machine.status === 'Running' ? 'text-green-400' : 'text-red-400'}`}>
                   {machine.status}
                 </p>
@@ -48,7 +48,7 @@ const SortingDashboard: React.FC<SortingDashboardProps> = ({ machines }) => {
             </div>
 
             <div className="h-24 w-full bg-slate-900/30 rounded-lg p-2">
-              <p className="text-xs text-slate-500 mb-1">Measurement Trend (Size)</p>
+              <p className="text-xs text-slate-500 mb-1">尺寸趨勢 (Measurement Trend)</p>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={machine.measurements}>
                   <Line 

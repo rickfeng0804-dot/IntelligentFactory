@@ -13,11 +13,11 @@ const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ blocks }) => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h2 className="text-2xl font-bold text-white">Energy Management (耗能管理)</h2>
+        <h2 className="text-2xl font-bold text-white">耗能管理 (Energy Management)</h2>
         <div className="bg-slate-800 px-4 py-2 rounded-lg border border-slate-700 flex items-center gap-3">
           <Zap className="text-yellow-400" size={20} />
           <div>
-            <p className="text-xs text-slate-400">Total Daily Consumption</p>
+            <p className="text-xs text-slate-400">單日總耗能 (Total Daily Consumption)</p>
             <p className="text-xl font-bold text-white">{totalConsumption.toLocaleString()} kWh</p>
           </div>
         </div>
@@ -54,7 +54,7 @@ const EnergyDashboard: React.FC<EnergyDashboardProps> = ({ blocks }) => {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-xs text-center text-slate-500 mt-2">24h Trend</p>
+            <p className="text-xs text-center text-slate-500 mt-2">24小時趨勢 (24h Trend)</p>
           </div>
         ))}
       </div>

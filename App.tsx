@@ -68,7 +68,7 @@ const App: React.FC = () => {
       return (
         <div className="flex flex-col items-center justify-center h-full text-slate-400">
            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mb-4"></div>
-           <p>正在讀取工廠數據...</p>
+           <p>正在讀取工廠數據... (Loading Factory Data...)</p>
         </div>
       );
     }
@@ -99,16 +99,16 @@ const App: React.FC = () => {
 
   const getHeaderTitle = (view: string) => {
     switch(view) {
-      case 'overview': return '智慧工廠管理系統-分享版';
-      case 'heading': return '打頭機監控';
-      case 'threading': return '搓牙機監控';
-      case 'pointing': return '夾尾機監控';
-      case 'sorting': return '篩選機監控';
-      case 'qc': return '品質管理看板';
-      case 'packaging': return '包裝機監控';
-      case 'personnel': return '人員管理';
-      case 'energy': return '耗能管理';
-      default: return '看板';
+      case 'overview': return '智慧工廠管理系統 (Smart Factory Management System)';
+      case 'heading': return '打頭機監控 (Heading Machine Monitor)';
+      case 'threading': return '搓牙機監控 (Threading Machine Monitor)';
+      case 'pointing': return '夾尾機監控 (Pointing Machine Monitor)';
+      case 'sorting': return '篩選機監控 (Sorting Machine Monitor)';
+      case 'qc': return '品質管理看板 (Quality Control Dashboard)';
+      case 'packaging': return '包裝機監控 (Packaging Machine Monitor)';
+      case 'personnel': return '人員管理 (Personnel Management)';
+      case 'energy': return '耗能管理 (Energy Management)';
+      default: return '看板 (Dashboard)';
     }
   };
 
@@ -142,7 +142,7 @@ const App: React.FC = () => {
             <button 
               onClick={handleManualRefresh}
               className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-colors flex items-center gap-2"
-              title="立即更新數據"
+              title="立即更新數據 (Update Now)"
             >
               <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
             </button>
@@ -150,14 +150,14 @@ const App: React.FC = () => {
             <button 
               onClick={() => setIsSettingsOpen(true)}
               className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-colors"
-              title="系統設定"
+              title="系統設定 (Settings)"
             >
               <Settings size={20} />
             </button>
 
             <div className="hidden md:flex flex-col items-end mr-2 ml-2">
-              <span className="text-sm font-bold text-slate-200">管理員</span>
-              <span className="text-xs text-slate-500">廠務經理</span>
+              <span className="text-sm font-bold text-slate-200">管理員 (Admin)</span>
+              <span className="text-xs text-slate-500">廠務經理 (Manager)</span>
             </div>
             <div className="w-10 h-10 rounded-full bg-slate-700 border-2 border-brand-500 flex items-center justify-center">
               <span className="font-bold text-sm">AU</span>

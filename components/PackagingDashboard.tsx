@@ -9,7 +9,7 @@ interface PackagingDashboardProps {
 const PackagingDashboard: React.FC<PackagingDashboardProps> = ({ machines }) => {
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Packaging Machines (包裝機)</h2>
+      <h2 className="text-2xl font-bold text-white">包裝機監控 (Packaging Machines)</h2>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {machines.map((machine) => (
@@ -33,25 +33,25 @@ const PackagingDashboard: React.FC<PackagingDashboardProps> = ({ machines }) => 
                  <div className="bg-slate-900/50 rounded-xl p-6 flex flex-col items-center justify-center">
                     <div className="flex items-center gap-2 text-slate-400 mb-2">
                        <Gauge size={20} />
-                       <span>Speed</span>
+                       <span>速度 (Speed)</span>
                     </div>
                     <p className="text-4xl font-bold text-white">{machine.speed}</p>
-                    <p className="text-xs text-slate-500 mt-1">Packs / Min</p>
+                    <p className="text-xs text-slate-500 mt-1">包/分 (Packs / Min)</p>
                  </div>
                  
                  <div className="bg-slate-900/50 rounded-xl p-6 flex flex-col items-center justify-center">
                     <div className="flex items-center gap-2 text-slate-400 mb-2">
                        <Package size={20} />
-                       <span>Accumulated</span>
+                       <span>累計產量 (Accumulated)</span>
                     </div>
                     <p className="text-4xl font-bold text-brand-400">{machine.totalProduction}</p>
-                    <p className="text-xs text-slate-500 mt-1">Total Packs</p>
+                    <p className="text-xs text-slate-500 mt-1">總包數 (Total Packs)</p>
                  </div>
               </div>
               
               <div className="mt-8 bg-slate-700/30 rounded-lg p-4">
                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-slate-300">Efficiency</span>
+                    <span className="text-slate-300">效率 (Efficiency)</span>
                     <span className="text-white font-bold">92%</span>
                  </div>
                  <div className="w-full bg-slate-700 h-3 rounded-full overflow-hidden">

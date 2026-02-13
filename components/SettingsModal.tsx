@@ -93,8 +93,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <SettingsIcon size={24} />
              </div>
              <div>
-                <h2 className="text-xl font-bold text-white">系統設定</h2>
-                <p className="text-sm text-slate-400">系統參數與資料管理</p>
+                <h2 className="text-xl font-bold text-white">系統設定 (Settings)</h2>
+                <p className="text-sm text-slate-400">系統參數與資料管理 (System Parameters & Data)</p>
              </div>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
@@ -108,13 +108,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             onClick={() => setActiveTab('general')}
             className={`py-3 px-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'general' ? 'border-brand-500 text-white' : 'border-transparent text-slate-400 hover:text-slate-300'}`}
           >
-            <span className="flex items-center gap-2"><SettingsIcon size={16}/> 一般設定</span>
+            <span className="flex items-center gap-2"><SettingsIcon size={16}/> 一般設定 (General)</span>
           </button>
           <button 
             onClick={() => setActiveTab('data')}
             className={`py-3 px-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'data' ? 'border-brand-500 text-white' : 'border-transparent text-slate-400 hover:text-slate-300'}`}
           >
-            <span className="flex items-center gap-2"><FileSpreadsheet size={16}/> 資料匯入/匯出</span>
+            <span className="flex items-center gap-2"><FileSpreadsheet size={16}/> 資料匯入/匯出 (Data Import/Export)</span>
           </button>
         </div>
 
@@ -127,7 +127,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
                   <Folder size={16} />
-                  CSV 資料來源路徑 (URL 或 本機伺服器路徑)
+                  CSV 資料來源路徑 (CSV Source Path)
                 </label>
                 <input 
                   type="text" 
@@ -137,7 +137,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all font-mono text-sm"
                 />
                 <p className="text-xs text-slate-500">
-                  預設: {DEFAULT_CSV_PATH}。
+                  預設 (Default): {DEFAULT_CSV_PATH}。
                   <br/>注意：瀏覽器無法直接讀取本機磁碟路徑 (如 C:\)。請確保該資料夾已透過本機 Web Server 發布，或輸入有效的 URL。若無法讀取將顯示模擬資料。
                 </p>
               </div>
@@ -146,7 +146,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
                   <Clock size={16} />
-                  自動更新頻率 (秒)
+                  自動更新頻率 (Update Interval - sec)
                 </label>
                 <div className="flex items-center gap-4">
                   <input 
@@ -169,14 +169,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                    }}
                    className="px-4 py-2 text-sm text-slate-400 hover:text-white flex items-center gap-2"
                  >
-                   <RotateCcw size={14} /> 重置預設
+                   <RotateCcw size={14} /> 重置預設 (Reset Default)
                  </button>
                  <button 
                    onClick={handleSave}
                    className="flex items-center gap-2 px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-medium transition-colors"
                  >
                    <Save size={18} />
-                   儲存設定
+                   儲存設定 (Save Settings)
                  </button>
               </div>
             </div>
@@ -188,7 +188,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                <div>
                   <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                      <Download size={20} className="text-brand-400" />
-                     匯出 CSV 資料 (Export)
+                     匯出 CSV 資料 (Export CSV)
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                      {Object.keys(CSV_CONFIG).map((key) => (
@@ -208,13 +208,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                <div className="pt-6 border-t border-slate-700">
                   <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                      <Upload size={20} className="text-brand-400" />
-                     匯入 CSV 資料 (Import)
+                     匯入 CSV 資料 (Import CSV)
                   </h3>
                   
                   <div className="bg-slate-900/50 p-6 rounded-lg border border-slate-700">
                      <div className="flex flex-col md:flex-row gap-4 items-end">
                         <div className="flex-1 w-full">
-                           <label className="block text-xs font-semibold text-slate-400 mb-2">選擇類別 (Category)</label>
+                           <label className="block text-xs font-semibold text-slate-400 mb-2">選擇類別 (Select Category)</label>
                            <select 
                               value={selectedImportCategory}
                               onChange={(e) => setSelectedImportCategory(e.target.value as keyof typeof CSV_CONFIG)}
@@ -226,7 +226,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                            </select>
                         </div>
                         <div className="flex-1 w-full">
-                           <label className="block text-xs font-semibold text-slate-400 mb-2">上傳 CSV 檔案</label>
+                           <label className="block text-xs font-semibold text-slate-400 mb-2">上傳 CSV 檔案 (Upload CSV)</label>
                            <input 
                               ref={fileInputRef}
                               type="file" 
