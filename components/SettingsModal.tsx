@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, AlertCircle, Database, Copy, Check, FileSpreadsheet, Download, Upload, Cloud } from 'lucide-react';
-import { getMockData, syncDataToGoogleSheet } from '../services/api';
+import { X, Save, AlertCircle, Database, Copy, Check, FileSpreadsheet, Download, Upload, Cloud, RotateCcw } from 'lucide-react';
+import { getMockData, syncDataToGoogleSheet, DEFAULT_GOOGLE_SCRIPT_URL } from '../services/api';
 import { DashboardData } from '../types';
 import { CSV_CONFIG, exportCategory, parseCSVImport } from '../services/csvUtils';
 
@@ -163,6 +163,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave, 
                     <Save size={18} />
                     儲存
                   </button>
+                </div>
+                {/* Reset to Default Button */}
+                <div className="flex justify-end">
+                   <button 
+                     type="button"
+                     onClick={() => setUrl(DEFAULT_GOOGLE_SCRIPT_URL)}
+                     className="text-xs text-slate-500 hover:text-brand-400 transition-colors flex items-center gap-1 mt-1"
+                   >
+                     <RotateCcw size={12} />
+                     重置為預設值
+                   </button>
                 </div>
               </div>
 
